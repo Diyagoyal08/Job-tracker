@@ -16,7 +16,7 @@ A full-featured job application tracker built with **Vite + React + Tailwind CSS
 | Axios | API communication |
 | React Redux | Redux bindings for React |
 
----
+---_____
 
 ## 📁 File Structure
 
