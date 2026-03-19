@@ -3,3 +3,7 @@ A full-featured job application tracker built with Vite + React + Tailwind CSS +
 
 🚀 Tech Stack
 ToolPurposeViteBuild tool & dev serverReact 18UI libraryTailwind CSSStylingReact Router DOMClient-side routingRedux ToolkitGlobal state managementAxiosAPI communicationReact ReduxRedux bindings for React
+
+
+
+pagination
