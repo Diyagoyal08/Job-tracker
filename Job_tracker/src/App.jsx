@@ -6,6 +6,7 @@ import authService from './appwrite/auth'
 import Dashboard from './pages/Dashboard'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   const dispatch = useDispatch()
@@ -28,7 +29,11 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100">
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+         <Route path="/" element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }/> 
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
       </Routes>
