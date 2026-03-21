@@ -3,7 +3,7 @@
 const initialState = {
   status: false,
   userData: null,
-  loading: false,
+  loading: true,
   error: null
 }
 
@@ -35,10 +35,14 @@ const authSlice = createSlice({
       state.loading = false
       state.error   = action.payload
       state.status  = false
+    },
+
+    setLoading: (state, action) => {
+      state.loading = action.payload
     }
 
   }
 })
 
-export const { login, logout, loginStart, loginFailure } = authSlice.actions
+export const { login, logout, loginStart, loginFailure, setLoading } = authSlice.actions
 export default authSlice.reducer

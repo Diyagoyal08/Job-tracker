@@ -26,12 +26,19 @@ export class AuthService {
   }
 
   async login(email, password) {
+  try {
+    // delete any existing session first
     try {
-      return await this.account.createEmailPasswordSession(email, password)
-    } catch (error) {
-      throw error
+      await this.account.deleteSession('current')
+    } catch (e) {
+      
     }
+    
+    return await this.account.createEmailPasswordSession(email, password)
+  } catch (error) {
+    throw error
   }
+}
 
   async getCurrentUser() {
     try {
