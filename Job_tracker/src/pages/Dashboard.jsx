@@ -1,4 +1,4 @@
- import { useState , useMemo } from 'react'
+ import { useState, useMemo } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import JobCard from '../components/JobCard'
 import useJobs from '../hooks/useJobs'
@@ -38,8 +38,8 @@ function Modal({ title, onSubmit, onClose, children, c }) {
 }
 
 function Dashboard() {
-  const { theme, toggleTheme } = useTheme()
-  const { user, handleLogout } = useAuth()
+  const { theme } = useTheme()
+  const { user }  = useAuth()
 
   const {
     jobs,
@@ -55,31 +55,18 @@ function Dashboard() {
     handleUpdate,
   } = useJobs()
 
-  // filter and search state — lesson 11 useState
   const [filter, setFilter]      = useState('All')
   const [searchQuery, setSearch] = useState('')
-
-  // useDebounce — lesson 19/20, delays search by 300ms
-  const debouncedSearch = useDebounce(searchQuery, 300)
-
-  const isDark = theme === 'dark'
+  const debouncedSearch          = useDebounce(searchQuery, 300)
+  const isDark                   = theme === 'dark'
 
   const c = {
-    dash:       isDark ? '#000000' : '#f5f4ee',
-    sb:         isDark ? '#0a0a0a' : '#eeeee6',
+    bg:         isDark ? '#000000' : '#f5f4ee',
     border:     isDark ? '#1a1a1a' : '#ddd8b8',
-    topbar:     isDark ? '#0a0a0a' : '#eeeee6',
     card:       isDark ? '#0a0a0a' : '#ffffff',
-    nav1bg:     isDark ? '#1a1a2e' : '#ddd8b8',
-    nav1c:      isDark ? '#ddd8b8' : '#542E71',
-    navC:       isDark ? '#6A66A3' : '#84A9C0',
-    logoC:      isDark ? '#ddd8b8' : '#542E71',
     title:      isDark ? '#ddd8b8' : '#542E71',
     sub:        isDark ? '#6A66A3' : '#84A9C0',
     text:       isDark ? '#f0ede0' : '#333333',
-    btnBg:      isDark ? '#111111' : '#eeeee6',
-    btnBorder:  isDark ? '#222222' : '#ddd8b8',
-    btnC:       isDark ? '#84A9C0' : '#6A66A3',
     statBg:     isDark ? '#0a0a0a' : '#eeeee6',
     statLbl:    isDark ? '#6A66A3' : '#84A9C0',
     statNum:    isDark ? '#ddd8b8' : '#542E71',
@@ -106,8 +93,6 @@ function Dashboard() {
     Saved:     { bg: isDark ? '#1a1a1a' : '#f5f5f5', text: isDark ? '#888888' : '#616161' },
   }
 
-  // filteredJobs combines both filter pill and debounced search
-  // first filter by status, then filter by search query
   const filteredJobs = jobs
     .filter(j => filter === 'All' || j.status === filter)
     .filter(j => {
@@ -119,15 +104,29 @@ function Dashboard() {
       )
     })
 
+  const recentActivity = useMemo(() =>
+    jobs.slice(0, 4).map(job => ({
+      text:  job.status === 'Offer'     ? `Got an offer from ${job.company}` :
+             job.status === 'Interview' ? `Interview scheduled — ${job.company}` :
+             job.status === 'Rejected'  ? `Rejected by ${job.company}` :
+             `Applied to ${job.company}`,
+      color: job.status === 'Offer'     ? '#B3CBB9' :
+             job.status === 'Interview' ? '#84A9C0' :
+             job.status === 'Rejected'  ? '#542E71' : '#6A66A3',
+      date:  new Date(job.$createdAt).toLocaleDateString()
+    }))
+  , [jobs])
+
+  const maxJobs = useMemo(() =>
+    Math.max(...["Applied","Interview","Offer","Rejected","Saved"].map(s =>
+      jobs.filter(j => j.status === s).length
+    ), 1)
+  , [jobs])
+
   const inputStyle = {
-    width: '100%',
-    border: `1px solid ${c.border}`,
-    borderRadius: '10px',
-    padding: '10px 14px',
-    fontSize: '13px',
-    background: c.input,
-    color: c.inputText,
-    outline: 'none',
+    width: '100%', border: `1px solid ${c.border}`, borderRadius: '10px',
+    padding: '10px 14px', fontSize: '13px', background: c.input,
+    color: c.inputText, outline: 'none',
   }
 
   const formFields = (
@@ -139,240 +138,123 @@ function Dashboard() {
       ].map(({ label, value, set, placeholder, req }) => (
         <div key={label}>
           <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: c.sub, marginBottom: '5px' }}>{label}</label>
-          <input
-            type="text"
-            value={value}
-            onChange={e => set(e.target.value)}
-            placeholder={placeholder}
-            required={req}
-            style={inputStyle}
-          />
+          <input type="text" value={value} onChange={e => set(e.target.value)} placeholder={placeholder} required={req} style={inputStyle} />
         </div>
       ))}
       <div>
         <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: c.sub, marginBottom: '5px' }}>Status</label>
         <select value={status} onChange={e => setStatus(e.target.value)} style={inputStyle}>
-          {["Applied","Interview","Offer","Rejected","Saved"].map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
+          {["Applied","Interview","Offer","Rejected","Saved"].map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
     </div>
   )
- const recentActivity = useMemo(() => 
-  jobs.slice(0, 4).map(job => ({
-    text:  job.status === 'Offer'     ? `Got an offer from ${job.company}` :
-           job.status === 'Interview' ? `Interview scheduled — ${job.company}` :
-           job.status === 'Rejected'  ? `Rejected by ${job.company}` :
-           `Applied to ${job.company}`,
-    color: job.status === 'Offer'     ? '#B3CBB9' :
-           job.status === 'Interview' ? '#84A9C0' :
-           job.status === 'Rejected'  ? '#542E71' : '#6A66A3',
-    date:  new Date(job.$createdAt).toLocaleDateString()
-  }))
-, [jobs])
-
- const maxJobs = useMemo(() => 
-  Math.max(
-    ...["Applied","Interview","Offer","Rejected","Saved"].map(s =>
-      jobs.filter(j => j.status === s).length
-    ), 1
-  )
-, [jobs])
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: c.dash, fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px', background: c.bg, minHeight: '100%' }}>
 
-      {/* Sidebar */}
-      <div style={{ width: '200px', flexShrink: 0, background: c.sb, borderRight: `1px solid ${c.border}`, display: 'flex', flexDirection: 'column', padding: '20px 0' }}>
-        <div style={{ padding: '0 16px 20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg,#6A66A3,#542E71)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '12px' }}>JT</div>
-          <span style={{ fontSize: '14px', fontWeight: '700', color: c.logoC }}>JobTrack</span>
-        </div>
-
-        {[
-          { icon: '◈', label: 'Dashboard',  active: true  },
-          { icon: '◉', label: 'All Jobs',   active: false },
-          { icon: '◎', label: 'Saved',      active: false },
-          { icon: '◷', label: 'Interviews', active: false },
-        ].map(({ icon, label, active }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 16px', margin: '1px 8px', borderRadius: '10px', background: active ? c.nav1bg : 'none', color: active ? c.nav1c : c.navC, fontSize: '12px', fontWeight: active ? '600' : '400', cursor: 'pointer' }}>
-            <span>{icon}</span>{label}
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
+        {["Applied","Interview","Offer","Rejected"].map(s => (
+          <div key={s} style={{ background: c.statBg, border: `1px solid ${c.border}`, borderRadius: '14px', padding: '14px' }}>
+            <p style={{ fontSize: '10px', color: c.statLbl, marginBottom: '4px', fontWeight: '500' }}>{s}</p>
+            <p style={{ fontSize: '22px', fontWeight: '700', color: c.statNum }}>{jobs.filter(j => j.status === s).length}</p>
           </div>
         ))}
+      </div>
 
-        <div style={{ marginTop: 'auto', padding: '0 8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 16px', borderRadius: '10px', color: c.navC, fontSize: '12px', cursor: 'pointer' }}>
-            <span>◯</span>{user?.name?.split(' ')[0]}
-          </div>
+      {/* Add job button */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={() => setIsOpen(true)}
+          style={{ background: 'linear-gradient(135deg,#6A66A3,#542E71)', color: 'white', border: 'none', padding: '8px 18px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>
+          + Add Job
+        </button>
+      </div>
+
+      {/* Search + Filter */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Search by role, company or location..."
+          value={searchQuery}
+          onChange={e => setSearch(e.target.value)}
+          style={{ width: '100%', padding: '10px 16px', borderRadius: '12px', border: `1px solid ${c.border}`, background: c.card, color: c.text, fontSize: '13px', outline: 'none' }}
+        />
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {['All','Applied','Interview','Offer','Rejected','Saved'].map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              style={{ padding: '5px 14px', borderRadius: '20px', border: `1px solid ${filter === f ? '#6A66A3' : c.border}`, background: filter === f ? '#6A66A3' : 'none', color: filter === f ? 'white' : c.sub, fontSize: '11px', fontWeight: filter === f ? '600' : '400', cursor: 'pointer', transition: 'all .15s' }}>
+              {f}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Sticky navbar */}
-        <div style={{ background: c.topbar, borderBottom: `1px solid ${c.border}`, padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-          <div>
-            <h1 style={{ fontSize: '16px', fontWeight: '700', color: c.title }}>Dashboard</h1>
-            <p style={{ fontSize: '11px', color: c.sub, marginTop: '1px' }}>Welcome back, {user?.name} ✨</p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setIsOpen(true)}
-              style={{ background: 'linear-gradient(135deg,#6A66A3,#542E71)', color: 'white', border: 'none', padding: '8px 18px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>
-              + Add Job
-            </button>
-            <button onClick={toggleTheme}
-              style={{ background: c.btnBg, border: `1px solid ${c.btnBorder}`, color: c.btnC, padding: '8px 13px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer' }}>
-              {isDark ? '☀️' : '🌙'}
-            </button>
-            <button onClick={handleLogout}
-              style={{ background: c.btnBg, border: `1px solid ${c.btnBorder}`, color: c.btnC, padding: '8px 13px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer' }}>
-              Logout
-            </button>
-          </div>
-        </div>
-
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-          {/* Stats — always based on ALL jobs, not filtered */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
-            {["Applied","Interview","Offer","Rejected"].map(s => (
-              <div key={s} style={{ background: c.statBg, border: `1px solid ${c.border}`, borderRadius: '14px', padding: '14px' }}>
-                <p style={{ fontSize: '10px', color: c.statLbl, marginBottom: '4px', fontWeight: '500' }}>{s}</p>
-                <p style={{ fontSize: '22px', fontWeight: '700', color: c.statNum }}>{jobs.filter(j => j.status === s).length}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Search + Filter */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-
-            {/* Search input */}
-            <input
-              type="text"
-              placeholder="Search by role, company or location..."
-              value={searchQuery}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                borderRadius: '12px',
-                border: `1px solid ${c.border}`,
-                background: c.card,
-                color: c.text,
-                fontSize: '13px',
-                outline: 'none',
-              }}
-            />
-
-            {/* Filter pills */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {['All', 'Applied', 'Interview', 'Offer', 'Rejected', 'Saved'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={{
-                    padding: '5px 14px',
-                    borderRadius: '20px',
-                    border: `1px solid ${filter === f ? '#6A66A3' : c.border}`,
-                    background: filter === f ? '#6A66A3' : 'none',
-                    color: filter === f ? 'white' : c.sub,
-                    fontSize: '11px',
-                    fontWeight: filter === f ? '600' : '400',
-                    cursor: 'pointer',
-                    transition: 'all .15s',
-                  }}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Jobs list — uses filteredJobs not jobs */}
-          <div>
-            <p style={{ fontSize: '12px', fontWeight: '600', color: c.title, marginBottom: '10px' }}>
-              {filteredJobs.length === jobs.length
-                ? `Recent applications · ${jobs.length} total`
-                : `Showing ${filteredJobs.length} of ${jobs.length} jobs`
-              }
-            </p>
-            {filteredJobs.length === 0 ? (
-              <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '40px', textAlign: 'center' }}>
-                <p style={{ color: c.sub, fontSize: '13px' }}>
-                  {jobs.length === 0 ? 'No jobs yet' : 'No jobs match your search'}
-                </p>
-                {jobs.length === 0 && (
-                  <button onClick={() => setIsOpen(true)}
-                    style={{ marginTop: '10px', background: 'none', border: 'none', color: '#6A66A3', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
-                    Add your first job
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {filteredJobs.map(job => (
-                  <JobCard
-                    key={job.$id}
-                    job={job}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    isDark={isDark}
-                    c={c}
-                    statusColors={statusColors}
-                  />
-                ))}
-              </div>
+      {/* Jobs list */}
+      <div>
+        <p style={{ fontSize: '12px', fontWeight: '600', color: c.title, marginBottom: '10px' }}>
+          {filteredJobs.length === jobs.length
+            ? `Recent applications · ${jobs.length} total`
+            : `Showing ${filteredJobs.length} of ${jobs.length} jobs`}
+        </p>
+        {filteredJobs.length === 0 ? (
+          <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '40px', textAlign: 'center' }}>
+            <p style={{ color: c.sub, fontSize: '13px' }}>{jobs.length === 0 ? 'No jobs yet' : 'No jobs match your search'}</p>
+            {jobs.length === 0 && (
+              <button onClick={() => setIsOpen(true)} style={{ marginTop: '10px', background: 'none', border: 'none', color: '#6A66A3', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
+                Add your first job
+              </button>
             )}
           </div>
-
-          {/* Pipeline + Activity */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-
-            {/* Pipeline */}
-            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '18px' }}>
-              <p style={{ fontSize: '10px', fontWeight: '700', color: c.panelTitle, marginBottom: '14px', letterSpacing: '0.5px' }}>PIPELINE</p>
-              {[
-                { label: 'Applied',   color: '#6A66A3' },
-                { label: 'Interview', color: '#84A9C0' },
-                { label: 'Offer',     color: '#B3CBB9' },
-                { label: 'Rejected',  color: '#542E71' },
-                { label: 'Saved',     color: '#ddd8b8' },
-              ].map(({ label, color }) => {
-                const count = jobs.filter(j => j.status === label).length
-                const pct   = Math.round((count / maxJobs) * 100)
-                return (
-                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '10px', color: c.pipeLbl, width: '60px', flexShrink: 0, fontWeight: '500' }}>{label}</span>
-                    <div style={{ flex: 1, height: '5px', borderRadius: '3px', background: c.pipeWrap, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct || 0}%`, background: color, borderRadius: '3px', transition: 'width .4s' }} />
-                    </div>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: c.pipeCnt, width: '16px', textAlign: 'right' }}>{count}</span>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Recent Activity */}
-            <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '18px' }}>
-              <p style={{ fontSize: '10px', fontWeight: '700', color: c.panelTitle, marginBottom: '14px', letterSpacing: '0.5px' }}>RECENT ACTIVITY</p>
-              {recentActivity.length === 0 ? (
-                <p style={{ fontSize: '12px', color: c.sub }}>No activity yet</p>
-              ) : (
-                recentActivity.map((act, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', paddingBottom: '10px', marginBottom: '10px', borderBottom: i < recentActivity.length - 1 ? `1px solid ${c.border}` : 'none' }}>
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: act.color, marginTop: '4px', flexShrink: 0 }} />
-                    <div>
-                      <p style={{ fontSize: '12px', color: c.actText }}>{act.text}</p>
-                      <p style={{ fontSize: '10px', color: c.actTime, marginTop: '2px' }}>{act.date}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {filteredJobs.map(job => (
+              <JobCard key={job.$id} job={job} onEdit={handleEdit} onDelete={handleDelete} isDark={isDark} c={c} statusColors={statusColors} />
+            ))}
           </div>
+        )}
+      </div>
+
+      {/* Pipeline + Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+        <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '18px' }}>
+          <p style={{ fontSize: '10px', fontWeight: '700', color: c.panelTitle, marginBottom: '14px', letterSpacing: '0.5px' }}>PIPELINE</p>
+          {[
+            { label: 'Applied',   color: '#6A66A3' },
+            { label: 'Interview', color: '#84A9C0' },
+            { label: 'Offer',     color: '#B3CBB9' },
+            { label: 'Rejected',  color: '#542E71' },
+            { label: 'Saved',     color: '#ddd8b8' },
+          ].map(({ label, color }) => {
+            const count = jobs.filter(j => j.status === label).length
+            const pct   = Math.round((count / maxJobs) * 100)
+            return (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <span style={{ fontSize: '10px', color: c.pipeLbl, width: '60px', flexShrink: 0, fontWeight: '500' }}>{label}</span>
+                <div style={{ flex: 1, height: '5px', borderRadius: '3px', background: c.pipeWrap, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct || 0}%`, background: color, borderRadius: '3px', transition: 'width .4s' }} />
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: '700', color: c.pipeCnt, width: '16px', textAlign: 'right' }}>{count}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '18px' }}>
+          <p style={{ fontSize: '10px', fontWeight: '700', color: c.panelTitle, marginBottom: '14px', letterSpacing: '0.5px' }}>RECENT ACTIVITY</p>
+          {recentActivity.length === 0 ? (
+            <p style={{ fontSize: '12px', color: c.sub }}>No activity yet</p>
+          ) : (
+            recentActivity.map((act, i) => (
+              <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', paddingBottom: '10px', marginBottom: '10px', borderBottom: i < recentActivity.length - 1 ? `1px solid ${c.border}` : 'none' }}>
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: act.color, marginTop: '4px', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: '12px', color: c.actText }}>{act.text}</p>
+                  <p style={{ fontSize: '10px', color: c.actTime, marginTop: '2px' }}>{act.date}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -381,13 +263,11 @@ function Dashboard() {
           {formFields}
         </Modal>
       )}
-
       {editingJob && (
         <Modal title="Edit Job" onSubmit={handleUpdate} onClose={() => setEditingJob(null)} c={c}>
           {formFields}
         </Modal>
       )}
-
     </div>
   )
 }
