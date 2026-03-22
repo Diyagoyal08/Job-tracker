@@ -6,6 +6,39 @@ import { setJobs, addJob, removeJob, updateJob } from '../store/slices/jobSlice'
 import authService from '../appwrite/auth'
 import jobService from '../appwrite/jobs'
 import { useTheme } from '../context/ThemeContext'
+import JobCard from '../components/JobCard'
+
+function Modal({ title, onSubmit, onClose, children, c }) {
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 50 }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: c.card, borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '420px', margin: '0 16px', border: `1px solid ${c.border}` }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: '700', color: c.title }}>{title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: c.sub, fontSize: '18px', cursor: 'pointer' }}>✕</button>
+        </div>
+        <form onSubmit={onSubmit}>
+          {children}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <button type="button" onClick={onClose}
+              style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `1px solid ${c.border}`, background: 'none', color: c.sub, fontSize: '13px', cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button type="submit"
+              style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#6A66A3,#542E71)', color: 'white', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+              {title === 'Add Job' ? 'Add Job' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 function Dashboard() {
   const dispatch = useDispatch()
@@ -24,37 +57,37 @@ function Dashboard() {
   const isDark = theme === 'dark'
 
   const c = {
-    dash:        isDark ? '#000000' : '#f5f4ee',
-    sb:          isDark ? '#0a0a0a' : '#eeeee6',
-    border:      isDark ? '#1a1a1a' : '#ddd8b8',
-    topbar:      isDark ? '#0a0a0a' : '#eeeee6',
-    card:        isDark ? '#0a0a0a' : '#ffffff',
-    nav1bg:      isDark ? '#1a1a2e' : '#ddd8b8',
-    nav1c:       isDark ? '#ddd8b8' : '#542E71',
-    navC:        isDark ? '#6A66A3' : '#84A9C0',
-    logoC:       isDark ? '#ddd8b8' : '#542E71',
-    title:       isDark ? '#ddd8b8' : '#542E71',
-    sub:         isDark ? '#6A66A3' : '#84A9C0',
-    text:        isDark ? '#f0ede0' : '#333333',
-    btnBg:       isDark ? '#111111' : '#eeeee6',
-    btnBorder:   isDark ? '#222222' : '#ddd8b8',
-    btnC:        isDark ? '#84A9C0' : '#6A66A3',
-    statBg:      isDark ? '#0a0a0a' : '#eeeee6',
-    statLbl:     isDark ? '#6A66A3' : '#84A9C0',
-    statNum:     isDark ? '#ddd8b8' : '#542E71',
-    avBg:        isDark ? '#1a1a2e' : '#e8e6f5',
-    avC:         isDark ? '#84A9C0' : '#542E71',
-    jco:         isDark ? '#6A66A3' : '#84A9C0',
-    jdate:       isDark ? '#333333' : '#B3CBB9',
-    jbtn:        isDark ? '#333333' : '#B3CBB9',
-    panelTitle:  isDark ? '#6A66A3' : '#84A9C0',
-    pipeLbl:     isDark ? '#ddd8b8' : '#542E71',
-    pipeWrap:    isDark ? '#1a1a1a' : '#ddd8b8',
-    pipeCnt:     isDark ? '#ddd8b8' : '#542E71',
-    actText:     isDark ? '#f0ede0' : '#444444',
-    actTime:     isDark ? '#6A66A3' : '#84A9C0',
-    input:       isDark ? '#111111' : '#ffffff',
-    inputText:   isDark ? '#f0ede0' : '#333333',
+    dash:       isDark ? '#000000' : '#f5f4ee',
+    sb:         isDark ? '#0a0a0a' : '#eeeee6',
+    border:     isDark ? '#1a1a1a' : '#ddd8b8',
+    topbar:     isDark ? '#0a0a0a' : '#eeeee6',
+    card:       isDark ? '#0a0a0a' : '#ffffff',
+    nav1bg:     isDark ? '#1a1a2e' : '#ddd8b8',
+    nav1c:      isDark ? '#ddd8b8' : '#542E71',
+    navC:       isDark ? '#6A66A3' : '#84A9C0',
+    logoC:      isDark ? '#ddd8b8' : '#542E71',
+    title:      isDark ? '#ddd8b8' : '#542E71',
+    sub:        isDark ? '#6A66A3' : '#84A9C0',
+    text:       isDark ? '#f0ede0' : '#333333',
+    btnBg:      isDark ? '#111111' : '#eeeee6',
+    btnBorder:  isDark ? '#222222' : '#ddd8b8',
+    btnC:       isDark ? '#84A9C0' : '#6A66A3',
+    statBg:     isDark ? '#0a0a0a' : '#eeeee6',
+    statLbl:    isDark ? '#6A66A3' : '#84A9C0',
+    statNum:    isDark ? '#ddd8b8' : '#542E71',
+    avBg:       isDark ? '#1a1a2e' : '#e8e6f5',
+    avC:        isDark ? '#84A9C0' : '#542E71',
+    jco:        isDark ? '#6A66A3' : '#84A9C0',
+    jdate:      isDark ? '#333333' : '#B3CBB9',
+    jbtn:       isDark ? '#333333' : '#B3CBB9',
+    panelTitle: isDark ? '#6A66A3' : '#84A9C0',
+    pipeLbl:    isDark ? '#ddd8b8' : '#542E71',
+    pipeWrap:   isDark ? '#1a1a1a' : '#ddd8b8',
+    pipeCnt:    isDark ? '#ddd8b8' : '#542E71',
+    actText:    isDark ? '#f0ede0' : '#444444',
+    actTime:    isDark ? '#6A66A3' : '#84A9C0',
+    input:      isDark ? '#111111' : '#ffffff',
+    inputText:  isDark ? '#f0ede0' : '#333333',
   }
 
   const statusColors = {
@@ -133,66 +166,49 @@ function Dashboard() {
   const formFields = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {[
-        { label: 'Role', value: role, set: setRole, placeholder: 'e.g. Frontend Developer', req: true },
-        { label: 'Company', value: company, set: setCompany, placeholder: 'e.g. Google', req: true },
-        { label: 'Location', value: location, set: setLocation, placeholder: 'e.g. Remote', req: false },
+        { label: 'Role',     value: role,     set: setRole,     placeholder: 'e.g. Frontend Developer', req: true  },
+        { label: 'Company',  value: company,  set: setCompany,  placeholder: 'e.g. Google',             req: true  },
+        { label: 'Location', value: location, set: setLocation, placeholder: 'e.g. Remote',             req: false },
       ].map(({ label, value, set, placeholder, req }) => (
         <div key={label}>
           <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: c.sub, marginBottom: '5px' }}>{label}</label>
-          <input type="text" value={value} onChange={e => set(e.target.value)} placeholder={placeholder} required={req} style={inputStyle} />
+          <input
+            type="text"
+            value={value}
+            onChange={e => set(e.target.value)}
+            placeholder={placeholder}
+            required={req}
+            style={inputStyle}
+          />
         </div>
       ))}
       <div>
         <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: c.sub, marginBottom: '5px' }}>Status</label>
         <select value={status} onChange={e => setStatus(e.target.value)} style={inputStyle}>
-          {["Applied","Interview","Offer","Rejected","Saved"].map(s => <option key={s} value={s}>{s}</option>)}
+          {["Applied","Interview","Offer","Rejected","Saved"].map(s => (
+            <option key={s} value={s}>{s}</option>
+          ))}
         </select>
       </div>
     </div>
   )
 
-  const Modal = ({ title, onSubmit, onClose }) => (
-    <div
-      style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 50 }}
-      onClick={onClose}
-    >
-      <div
-        style={{ background: c.card, borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '420px', margin: '0 16px', border: `1px solid ${c.border}` }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: c.title }}>{title}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: c.sub, fontSize: '18px', cursor: 'pointer' }}>✕</button>
-        </div>
-        <form onSubmit={onSubmit}>
-          {formFields}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `1px solid ${c.border}`, background: 'none', color: c.sub, fontSize: '13px', cursor: 'pointer' }}>
-              Cancel
-            </button>
-            <button type="submit"
-              style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#6A66A3,#542E71)', color: 'white', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
-              {title === 'Add Job' ? 'Add Job' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-
   const recentActivity = jobs.slice(0, 4).map(job => ({
-    text: job.status === 'Offer'     ? `Got an offer from ${job.company}` :
-          job.status === 'Interview' ? `Interview scheduled — ${job.company}` :
-          job.status === 'Rejected'  ? `Rejected by ${job.company}` :
-          `Applied to ${job.company}`,
+    text:  job.status === 'Offer'     ? `Got an offer from ${job.company}` :
+           job.status === 'Interview' ? `Interview scheduled — ${job.company}` :
+           job.status === 'Rejected'  ? `Rejected by ${job.company}` :
+           `Applied to ${job.company}`,
     color: job.status === 'Offer'     ? '#B3CBB9' :
            job.status === 'Interview' ? '#84A9C0' :
            job.status === 'Rejected'  ? '#542E71' : '#6A66A3',
-    date: new Date(job.$createdAt).toLocaleDateString()
+    date:  new Date(job.$createdAt).toLocaleDateString()
   }))
 
-  const maxJobs = Math.max(...["Applied","Interview","Offer","Rejected","Saved"].map(s => jobs.filter(j => j.status === s).length), 1)
+  const maxJobs = Math.max(
+    ...["Applied","Interview","Offer","Rejected","Saved"].map(s =>
+      jobs.filter(j => j.status === s).length
+    ), 1
+  )
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: c.dash, fontFamily: 'system-ui, sans-serif' }}>
@@ -205,10 +221,10 @@ function Dashboard() {
         </div>
 
         {[
-          { icon: '◈', label: 'Dashboard', active: true },
-          { icon: '◉', label: 'All Jobs',  active: false },
-          { icon: '◎', label: 'Saved',     active: false },
-          { icon: '◷', label: 'Interviews',active: false },
+          { icon: '◈', label: 'Dashboard',  active: true  },
+          { icon: '◉', label: 'All Jobs',   active: false },
+          { icon: '◎', label: 'Saved',      active: false },
+          { icon: '◷', label: 'Interviews', active: false },
         ].map(({ icon, label, active }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 16px', margin: '1px 8px', borderRadius: '10px', background: active ? c.nav1bg : 'none', color: active ? c.nav1c : c.navC, fontSize: '12px', fontWeight: active ? '600' : '400', cursor: 'pointer' }}>
             <span>{icon}</span>{label}
@@ -274,28 +290,17 @@ function Dashboard() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {jobs.map(job => {
-                  const sc = statusColors[job.status] || statusColors.Saved
-                  return (
-                    <div key={job.$id} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: c.avBg, color: c.avC, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '13px', flexShrink: 0 }}>
-                        {job.company?.[0]?.toUpperCase()}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', fontWeight: '600', color: c.text }}>{job.role}</p>
-                        <p style={{ fontSize: '11px', color: c.jco, marginTop: '2px' }}>{job.company}{job.location ? ` · ${job.location}` : ''}</p>
-                      </div>
-                      <span style={{ fontSize: '10px', fontWeight: '600', padding: '3px 10px', borderRadius: '20px', background: sc.bg, color: sc.text, flexShrink: 0 }}>
-                        {job.status}
-                      </span>
-                      <p style={{ fontSize: '10px', color: c.jdate, flexShrink: 0 }}>
-                        {new Date(job.$createdAt).toLocaleDateString()}
-                      </p>
-                      <button onClick={() => handleEdit(job)} style={{ background: 'none', border: 'none', color: c.jbtn, fontSize: '14px', cursor: 'pointer', flexShrink: 0 }}>✎</button>
-                      <button onClick={() => handleDelete(job.$id)} style={{ background: 'none', border: 'none', color: c.jbtn, fontSize: '14px', cursor: 'pointer', flexShrink: 0 }}>✕</button>
-                    </div>
-                  )
-                })}
+                {jobs.map(job => (
+                  <JobCard
+                    key={job.$id}
+                    job={job}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isDark={isDark}
+                    c={c}
+                    statusColors={statusColors}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -349,8 +354,17 @@ function Dashboard() {
         </div>
       </div>
 
-      {isOpen    && <Modal title="Add Job"  onSubmit={handleSubmit} onClose={() => setIsOpen(false)} />}
-      {editingJob && <Modal title="Edit Job" onSubmit={handleUpdate} onClose={() => setEditingJob(null)} />}
+      {isOpen && (
+        <Modal title="Add Job" onSubmit={handleSubmit} onClose={() => setIsOpen(false)} c={c}>
+          {formFields}
+        </Modal>
+      )}
+
+      {editingJob && (
+        <Modal title="Edit Job" onSubmit={handleUpdate} onClose={() => setEditingJob(null)} c={c}>
+          {formFields}
+        </Modal>
+      )}
 
     </div>
   )
