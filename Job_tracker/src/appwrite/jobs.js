@@ -4,18 +4,18 @@ import { databases, ID } from './config'
 
 export class JobService {
 
-  async createJob(jobData) {
+  async createJob(userId, jobData) {
     try {
       return await databases.createDocument(
         conf.appwriteDatabaseId,
         conf.appwriteCollectionId,
         ID.unique(),
         {
-          title:    jobData.title,
+          role:     jobData.role,
           company:  jobData.company,
           location: jobData.location,
           status:   jobData.status,
-          notes:    jobData.notes,
+          userId:   userId,
         }
       )
     } catch (error) {
