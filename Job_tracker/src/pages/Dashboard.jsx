@@ -1,12 +1,9 @@
- import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
-import { logout } from '../store/slices/authSlice'
-import { setJobs, addJob, removeJob, updateJob } from '../store/slices/jobSlice'
-import authService from '../appwrite/auth'
-import jobService from '../appwrite/jobs'
+ import { useState , useMemo } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import JobCard from '../components/JobCard'
+import useJobs from '../hooks/useJobs'
+import useAuth from '../hooks/useAuth'
+import useDebounce from '../hooks/useDebounce'
 
 function Modal({ title, onSubmit, onClose, children, c }) {
   return (
@@ -41,18 +38,29 @@ function Modal({ title, onSubmit, onClose, children, c }) {
 }
 
 function Dashboard() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const jobs     = useSelector(state => state.jobs.jobs)
-  const user     = useSelector(state => state.auth.userData)
   const { theme, toggleTheme } = useTheme()
+  const { user, handleLogout } = useAuth()
 
-  const [isOpen, setIsOpen]         = useState(false)
-  const [editingJob, setEditingJob] = useState(null)
-  const [role, setRole]             = useState("")
-  const [company, setCompany]       = useState("")
-  const [location, setLocation]     = useState("")
-  const [status, setStatus]         = useState("Applied")
+  const {
+    jobs,
+    isOpen,      setIsOpen,
+    editingJob,  setEditingJob,
+    role,        setRole,
+    company,     setCompany,
+    location,    setLocation,
+    status,      setStatus,
+    handleSubmit,
+    handleDelete,
+    handleEdit,
+    handleUpdate,
+  } = useJobs()
+
+  // filter and search state — lesson 11 useState
+  const [filter, setFilter]      = useState('All')
+  const [searchQuery, setSearch] = useState('')
+
+  // useDebounce — lesson 19/20, delays search by 300ms
+  const debouncedSearch = useDebounce(searchQuery, 300)
 
   const isDark = theme === 'dark'
 
@@ -98,59 +106,18 @@ function Dashboard() {
     Saved:     { bg: isDark ? '#1a1a1a' : '#f5f5f5', text: isDark ? '#888888' : '#616161' },
   }
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await jobService.getJobs()
-        dispatch(setJobs(response.documents))
-      } catch (error) { console.error(error) }
-    }
-    fetchJobs()
-  }, [dispatch])
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout()
-      dispatch(logout())
-      navigate('/login')
-    } catch (error) { console.error(error) }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    try {
-      const newJob = await jobService.createJob(user.$id, { role, company, location, status })
-      dispatch(addJob(newJob))
-      setIsOpen(false)
-      setRole(""); setCompany(""); setLocation(""); setStatus("Applied")
-    } catch (error) { alert("Failed to add job: " + error.message) }
-  }
-
-  const handleDelete = async (jobId) => {
-    if (!window.confirm("Are you sure?")) return
-    try {
-      await jobService.deleteJob(jobId)
-      dispatch(removeJob(jobId))
-    } catch (error) { alert("Failed to delete: " + error.message) }
-  }
-
-  const handleEdit = (job) => {
-    setEditingJob(job)
-    setRole(job.role)
-    setCompany(job.company)
-    setLocation(job.location || "")
-    setStatus(job.status)
-  }
-
-  const handleUpdate = async (e) => {
-    e.preventDefault()
-    try {
-      const updated = await jobService.updateJob(editingJob.$id, { role, company, location, status })
-      dispatch(updateJob(updated))
-      setEditingJob(null)
-      setRole(""); setCompany(""); setLocation(""); setStatus("Applied")
-    } catch (error) { alert("Failed to update: " + error.message) }
-  }
+  // filteredJobs combines both filter pill and debounced search
+  // first filter by status, then filter by search query
+  const filteredJobs = jobs
+    .filter(j => filter === 'All' || j.status === filter)
+    .filter(j => {
+      const q = debouncedSearch.toLowerCase()
+      return (
+        j.role?.toLowerCase().includes(q) ||
+        j.company?.toLowerCase().includes(q) ||
+        j.location?.toLowerCase().includes(q)
+      )
+    })
 
   const inputStyle = {
     width: '100%',
@@ -192,8 +159,8 @@ function Dashboard() {
       </div>
     </div>
   )
-
-  const recentActivity = jobs.slice(0, 4).map(job => ({
+ const recentActivity = useMemo(() => 
+  jobs.slice(0, 4).map(job => ({
     text:  job.status === 'Offer'     ? `Got an offer from ${job.company}` :
            job.status === 'Interview' ? `Interview scheduled — ${job.company}` :
            job.status === 'Rejected'  ? `Rejected by ${job.company}` :
@@ -203,12 +170,15 @@ function Dashboard() {
            job.status === 'Rejected'  ? '#542E71' : '#6A66A3',
     date:  new Date(job.$createdAt).toLocaleDateString()
   }))
+, [jobs])
 
-  const maxJobs = Math.max(
+ const maxJobs = useMemo(() => 
+  Math.max(
     ...["Applied","Interview","Offer","Rejected","Saved"].map(s =>
       jobs.filter(j => j.status === s).length
     ), 1
   )
+, [jobs])
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: c.dash, fontFamily: 'system-ui, sans-serif' }}>
@@ -265,7 +235,7 @@ function Dashboard() {
 
         <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-          {/* Stats */}
+          {/* Stats — always based on ALL jobs, not filtered */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
             {["Applied","Interview","Offer","Rejected"].map(s => (
               <div key={s} style={{ background: c.statBg, border: `1px solid ${c.border}`, borderRadius: '14px', padding: '14px' }}>
@@ -275,22 +245,74 @@ function Dashboard() {
             ))}
           </div>
 
-          {/* Jobs list */}
+          {/* Search + Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+            {/* Search input */}
+            <input
+              type="text"
+              placeholder="Search by role, company or location..."
+              value={searchQuery}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                border: `1px solid ${c.border}`,
+                background: c.card,
+                color: c.text,
+                fontSize: '13px',
+                outline: 'none',
+              }}
+            />
+
+            {/* Filter pills */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {['All', 'Applied', 'Interview', 'Offer', 'Rejected', 'Saved'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  style={{
+                    padding: '5px 14px',
+                    borderRadius: '20px',
+                    border: `1px solid ${filter === f ? '#6A66A3' : c.border}`,
+                    background: filter === f ? '#6A66A3' : 'none',
+                    color: filter === f ? 'white' : c.sub,
+                    fontSize: '11px',
+                    fontWeight: filter === f ? '600' : '400',
+                    cursor: 'pointer',
+                    transition: 'all .15s',
+                  }}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Jobs list — uses filteredJobs not jobs */}
           <div>
             <p style={{ fontSize: '12px', fontWeight: '600', color: c.title, marginBottom: '10px' }}>
-              Recent applications · {jobs.length} total
+              {filteredJobs.length === jobs.length
+                ? `Recent applications · ${jobs.length} total`
+                : `Showing ${filteredJobs.length} of ${jobs.length} jobs`
+              }
             </p>
-            {jobs.length === 0 ? (
+            {filteredJobs.length === 0 ? (
               <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '40px', textAlign: 'center' }}>
-                <p style={{ color: c.sub, fontSize: '13px' }}>No jobs yet</p>
-                <button onClick={() => setIsOpen(true)}
-                  style={{ marginTop: '10px', background: 'none', border: 'none', color: '#6A66A3', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
-                  Add your first job
-                </button>
+                <p style={{ color: c.sub, fontSize: '13px' }}>
+                  {jobs.length === 0 ? 'No jobs yet' : 'No jobs match your search'}
+                </p>
+                {jobs.length === 0 && (
+                  <button onClick={() => setIsOpen(true)}
+                    style={{ marginTop: '10px', background: 'none', border: 'none', color: '#6A66A3', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
+                    Add your first job
+                  </button>
+                )}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {jobs.map(job => (
+                {filteredJobs.map(job => (
                   <JobCard
                     key={job.$id}
                     job={job}
