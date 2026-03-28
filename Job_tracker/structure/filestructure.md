@@ -283,5 +283,3 @@ Add to `src/index.css`:
 - The `ProtectedRoute.jsx` pattern is used in almost every real-world React app — understand it well
 
 ---
-
-*Built while following the React roadmap — lessons 1 through 35.*
