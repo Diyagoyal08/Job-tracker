@@ -1,101 +1,109 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext'
 import useAuth from '../../hooks/useAuth'
+import { getColors } from '../../styles/theme'
 
 function Layout() {
   const { theme, toggleTheme } = useTheme()
   const { user, handleLogout } = useAuth()
   const location = useLocation()
-  const isDark = theme === 'dark'
-
-  const c = {
-    dash:    isDark ? '#000000' : '#f5f4ee',
-    sb:      isDark ? '#0a0a0a' : '#eeeee6',
-    border:  isDark ? '#1a1a1a' : '#ddd8b8',
-    topbar:  isDark ? '#0a0a0a' : '#eeeee6',
-    nav1bg:  isDark ? '#1a1a2e' : '#ddd8b8',
-    nav1c:   isDark ? '#ddd8b8' : '#542E71',
-    navC:    isDark ? '#6A66A3' : '#84A9C0',
-    logoC:   isDark ? '#ddd8b8' : '#542E71',
-    title:   isDark ? '#ddd8b8' : '#542E71',
-    sub:     isDark ? '#6A66A3' : '#84A9C0',
-    btnBg:   isDark ? '#111111' : '#eeeee6',
-    btnBorder: isDark ? '#222222' : '#ddd8b8',
-    btnC:    isDark ? '#84A9C0' : '#6A66A3',
-  }
+  const isDark   = theme === 'dark'
+  const c        = getColors(isDark)
 
   const navItems = [
-    { icon: '◈', label: 'Dashboard',  path: '/'           },
-    { icon: '◉', label: 'All Jobs',   path: '/all-jobs'   },
-    { icon: '◎', label: 'Saved',      path: '/saved'      },
-    { icon: '◷', label: 'Interviews', path: '/interviews' },
+    { label: 'Dashboard',  path: '/',           icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg> },
+    { label: 'All Jobs',   path: '/all-jobs',   icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 3V2M11 3V2M2 7h12"/></svg> },
+    { label: 'Interviews', path: '/interviews', icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg> },
+    { label: 'Saved',      path: '/saved',      icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2h10a1 1 0 011 1v11l-5-3-5 3V3a1 1 0 011-1z"/></svg> },
   ]
 
-  return (
-    <div style={{ display: 'flex', height: '100vh', background: c.dash, fontFamily: 'system-ui, sans-serif' }}>
+  const pageTitle = navItems.find(n => n.path === location.pathname)?.label || 'Profile'
 
-      {/* Sidebar */}
-      <div style={{ width: '200px', flexShrink: 0, background: c.sb, borderRight: `1px solid ${c.border}`, display: 'flex', flexDirection: 'column', padding: '20px 0' }}>
-        <div style={{ padding: '0 16px 20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg,#6A66A3,#542E71)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '12px' }}>JT</div>
-          <span style={{ fontSize: '14px', fontWeight: '700', color: c.logoC }}>JobTrack</span>
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', background: c.bg, fontFamily: "-apple-system, 'Inter', 'Segoe UI', sans-serif" }}>
+
+      {/* ── Sidebar ── */}
+      <aside style={{ width: '196px', flexShrink: 0, background: c.sbBg, borderRight: `1px solid ${c.border}`, display: 'flex', flexDirection: 'column' }}>
+
+        {/* Logo */}
+        <div style={{ padding: '18px 16px 14px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: `1px solid ${c.border}` }}>
+          <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: c.sbLogomark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.primaryText, fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>JT</div>
+          <span style={{ fontSize: '13px', fontWeight: 650, letterSpacing: '-0.3px', color: c.sbBrand }}>JobTrack</span>
         </div>
 
-        {/* Nav items — each is a Link so clicking navigates */}
-        {navItems.map(({ icon, label, path }) => {
-          const active = location.pathname === path
-          return (
-            <Link
-              key={path}
-              to={path}
-              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 16px', margin: '1px 8px', borderRadius: '10px', background: active ? c.nav1bg : 'none', color: active ? c.nav1c : c.navC, fontSize: '12px', fontWeight: active ? '600' : '400' }}
-            >
-              <span>{icon}</span>{label}
-            </Link>
-          )
-        })}
+        {/* Nav */}
+        <nav style={{ padding: '8px 4px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <span style={{ padding: '10px 10px 4px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', color: c.sbSection }}>Main</span>
 
-        {/* Profile link at bottom */}
-        <div style={{ marginTop: 'auto', padding: '0 8px' }}>
-          <Link
-            to="/profile"
-            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 16px', borderRadius: '10px', background: location.pathname === '/profile' ? c.nav1bg : 'none', color: location.pathname === '/profile' ? c.nav1c : c.navC, fontSize: '12px', fontWeight: location.pathname === '/profile' ? '600' : '400' }}
-          >
-            <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(135deg,#6A66A3,#542E71)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px', fontWeight: '700' }}>
+          {navItems.map(({ label, path, icon }) => {
+            const active = location.pathname === path
+            return (
+              <Link key={path} to={path} style={{
+                textDecoration: 'none',
+                display: 'flex', alignItems: 'center', gap: '9px',
+                padding: '7px 10px', margin: '1px 4px', borderRadius: '7px',
+                fontSize: '12px', fontWeight: active ? 550 : 450,
+                background: active ? c.navActive : 'transparent',
+                color: active ? c.navActiveText : c.navText,
+                transition: 'background .12s, color .12s',
+              }}>
+                <span style={{ opacity: active ? 1 : 0.6, display: 'flex', alignItems: 'center' }}>{icon}</span>
+                {label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* User footer */}
+        <div style={{ borderTop: `1px solid ${c.sbFooter}`, padding: '10px' }}>
+          <Link to="/profile" style={{
+            textDecoration: 'none',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '7px 8px', borderRadius: '7px',
+            background: location.pathname === '/profile' ? c.navActive : 'transparent',
+            transition: 'background .12s',
+          }}>
+            <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: c.avBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: c.avText, flexShrink: 0 }}>
               {user?.name?.[0]?.toUpperCase()}
             </div>
-            {user?.name?.split(' ')[0]}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '11px', fontWeight: 500, color: location.pathname === '/profile' ? c.navActiveText : c.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name?.split(' ')[0]}</div>
+              <div style={{ fontSize: '9px', color: location.pathname === '/profile' ? c.navActiveText : c.textMuted, opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</div>
+            </div>
           </Link>
         </div>
-      </div>
+      </aside>
 
-      {/* Main area — sticky navbar + Outlet */}
+      {/* ── Main ── */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Sticky navbar */}
-        <div style={{ background: c.topbar, borderBottom: `1px solid ${c.border}`, padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-          <div>
-            <h1 style={{ fontSize: '16px', fontWeight: '700', color: c.title }}>
-              {navItems.find(n => n.path === location.pathname)?.label || 'Profile'}
-            </h1>
-            <p style={{ fontSize: '11px', color: c.sub, marginTop: '1px' }}>Welcome back, {user?.name} ✨</p>
+        {/* Topbar */}
+        <header style={{ height: '52px', padding: '0 20px', background: c.topbar, borderBottom: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h1 style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.2px', color: c.text }}>{pageTitle}</h1>
+            <span style={{ fontSize: '11px', color: c.textMuted }}>· {today}</span>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={toggleTheme}
-              style={{ background: c.btnBg, border: `1px solid ${c.btnBorder}`, color: c.btnC, padding: '8px 13px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <button
+              onClick={toggleTheme}
+              style={{ padding: '5px 10px', borderRadius: '7px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, border: `1px solid ${c.btnSmBorder}`, background: c.btnSmBg, color: c.btnSmText }}
+            >
               {isDark ? '☀️' : '🌙'}
             </button>
-            <button onClick={handleLogout}
-              style={{ background: c.btnBg, border: `1px solid ${c.btnBorder}`, color: c.btnC, padding: '8px 13px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer' }}>
-              Logout
+            <button
+              onClick={handleLogout}
+              style={{ padding: '5px 12px', borderRadius: '7px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, border: `1px solid ${c.btnSmBorder}`, background: c.btnSmBg, color: c.btnSmText }}
+            >
+              Sign out
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Page content renders here */}
+        {/* Page content */}
         <Outlet />
       </div>
-
     </div>
   )
 }
